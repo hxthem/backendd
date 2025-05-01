@@ -6,10 +6,16 @@ const generateToken = require("../utils/generateToken");
 const generateCode = require("../utils/generateCode");
 
 exports.register = async (req, res) => {
+  console.log("Register endpoint hit");
   const { email, password } = req.body;
+  console.log("Request body:", req.body);
+
   try {
     const exist = await User.findOne({ where: { email } });
-    if (exist) return res.status(400).json({ msg: "This email is already in use." });
+    if (exist) {
+      console.log("Email already in use");
+      return res.status(400).json({ msg: "This email is already in use." });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const verificationCode = generateCode();
@@ -17,9 +23,10 @@ exports.register = async (req, res) => {
     await User.create({ email, password: hashed, verificationCode });
     await sendMail(email, "Verification Code", `Your code is: ${verificationCode}`);
 
+    console.log("User registered successfully");
     res.status(200).json({ msg: "Check your email for the verification code." });
   } catch (err) {
-    console.error(err);
+    console.error("Error in register function:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
